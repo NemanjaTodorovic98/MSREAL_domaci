@@ -93,7 +93,7 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		strcpy(string, *(buff+7));
 	else if(!strncmp("clear",buff,5))
 		for(i = 0; i < 100; i++) *(string+i) = 0;
-	else if(!strcmp("shrink",buff,6))
+	else if(!strncmp("shrink",buff,6))
 	{
 		while(buff[i] == ' ') i++;
 		first_char = i;
@@ -107,14 +107,14 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 			else string[i] = buff[first_char + 1];
 		}
 	}
-	else if(!strcmp("append=", buff, 7))
+	else if(!strncmp("append=", buff, 7))
 	{
 		if(100 - (length - 1) - str_len > 0)
-			string = strcat(string,*(buff + 7));
+			strcat(string,*(buff + 7));
 		else
 			printk(KERN_WARNING "APPEND STRING PREDUGACAKKKK\n"); 
 	}
-	else if(!strcmp("truncate=", buff, 9))
+	else if(!strncmp("truncate=", buff, 9))
 	{
 		ret = sscanf(buff,"%d",&word);
  		if( ret != 1 || word < (str_len - 1))
