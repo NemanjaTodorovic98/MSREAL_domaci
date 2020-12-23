@@ -18,7 +18,7 @@ static struct device *my_device;
 static struct cdev *my_cdev;
 
 char string[100];
-int pos = 0;
+//int pos = 0;
 int endRead = 0;
 
 int stred_open(struct inode *pinode, struct file *pfile);
@@ -52,28 +52,29 @@ ssize_t stred_read(struct file *pfile, char __user *buffer, size_t length, loff_
 {
 	int ret;
 	char buff[BUFF_SIZE];
-	long int len = 0;
+	int str_len = strlen(string);
 	if (endRead){
 		endRead = 0;
 		return 0;
 	}
 
-	if(pos > 0)
-	{
-		pos --;
-		len = scnprintf(buff, BUFF_SIZE, "%d ", string[pos]);
-		ret = copy_to_user(buffer, buff, len);
+	//if(pos > 0)
+	//{
+		//pos --;
+		//len = scnprintf(buff, BUFF_SIZE, "%d ", string[pos]);
+		strcat(buff,string);
+		ret = copy_to_user(buffer, buff, str_len);
 		if(ret)
 			return -EFAULT;
 		printk(KERN_INFO "Succesfully read\n");
-		endRead = 1;
-	}
-	else
-	{
-			printk(KERN_WARNING "Stred is empty\n"); 
-	}
+	endRead = 1;
+	//}
+	//else
+	//{
+	//		printk(KERN_WARNING "Stred is empty\n"); 
+	//}
 
-	return len;
+	return str_len;
 }
 
 ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset) 
@@ -89,8 +90,9 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 	if(ret)
 		return -EFAULT;
 	buff[length-1] = '\0';
-	if(!strncmp("string=",buff,7))
-		strcpy(string, *(buff+7));
+	if(!strncmp("string=",buff,7)){
+		printk(KERN_WARNING "ovde sam zabooo\n");
+		strcpy(string, (buff+7));}
 	else if(!strncmp("clear",buff,5))
 		for(i = 0; i < 100; i++) *(string+i) = 0;
 	else if(!strncmp("shrink",buff,6))
@@ -110,7 +112,7 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 	else if(!strncmp("append=", buff, 7))
 	{
 		if(100 - (length - 1) - str_len > 0)
-			strcat(string,*(buff + 7));
+			strcat(string,(buff + 7));
 		else
 			printk(KERN_WARNING "APPEND STRING PREDUGACAKKKK\n"); 
 	}
@@ -118,7 +120,7 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 	{
 		ret = sscanf(buff,"%d",&word);
  		if( ret != 1 || word < (str_len - 1))
-			printk(KERN_WARNING "Wrong input in function TRUNCATE\n");
+			printk(KERN_WARNING "Wrong input in function TRUNCATE %d %d \n",ret, word);
 		else
 		{
 			string[(str_len - 1) - word] = '\0'; 
