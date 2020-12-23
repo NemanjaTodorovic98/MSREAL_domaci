@@ -31,7 +31,7 @@ struct file_operations my_fops =
 	.owner = THIS_MODULE,
 	.open = stred_open,
 	.read = stred_read,
-	.write = stred_write,
+	.write = stred_write,d
 	.release = stred_close,
 };
 
@@ -91,7 +91,7 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		return -EFAULT;
 	buff[length-1] = '\0';
 	if(!strncmp("string=",buff,7)){
-		printk(KERN_WARNING "ovde sam zabooo\n");
+		printk(KERN_INFO "Input string successfuly stored in buffer!\n");
 		strcpy(string, (buff+7));}
 	else if(!strncmp("clear",buff,5))
 		for(i = 0; i < 100; i++) *(string+i) = 0;
