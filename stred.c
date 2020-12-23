@@ -31,7 +31,7 @@ struct file_operations my_fops =
 	.owner = THIS_MODULE,
 	.open = stred_open,
 	.read = stred_read,
-	.write = stred_write,d
+	.write = stred_write,
 	.release = stred_close,
 };
 
@@ -80,8 +80,9 @@ ssize_t stred_read(struct file *pfile, char __user *buffer, size_t length, loff_
 ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset) 
 {
 	char buff[BUFF_SIZE];
-	int word;
+	unsigned int word;
 	int str_len = strlen(string);
+	char *tmp;	
 	int ret;
 	int first_char=0;
 	int i=0;
@@ -90,31 +91,45 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 	if(ret)
 		return -EFAULT;
 	buff[length-1] = '\0';
-	if(!strncmp("string=",buff,7)){
-		printk(KERN_INFO "Input string successfuly stored in buffer!\n");
-		strcpy(string, (buff+7));}
+	if(!strncmp("string=",buff,7))
+	{
+		printk(KERN_INFO "Input string successfully stored in buffer!\n");
+		strcpy(string, (buff+7));
+	}
 	else if(!strncmp("clear",buff,5))
+	{
 		for(i = 0; i < 100; i++) *(string+i) = 0;
+		printk(KERN_INFO "Internal buffer cleared successfully!\n");
+	}
 	else if(!strncmp("shrink",buff,6))
 	{
-		while(buff[i] == ' ') i++;
-		first_char = i;
-		i = length - 1;
-		while(buff[i] == ' ') i--;
-		if(i != length - 1)
-			buff[i] = '\0';
-		for(i = 0; i < 100; i++)
-		{ 
-			if(buff[i] == '\0') break;
-			else string[i] = buff[first_char + 1];
+		tmp = strim(string);
+		i = 0;
+		while(string[i] != '\0')
+		{
+			i++;
+			string[i] = (*(tmp + i));
 		}
+		string[i] = '\0';
+		/*while(string[i] == ' ') i++;
+		first_char = i;
+		i = str_len - 2;
+		while(string[i] == ' ') i--;
+		string[i + 1] = 0;
+		str_len = strlen(string);
+		i = 0;
+		while(i != str_len - 1) string[i] = string[first_char + i]; */
+		printk(KERN_INFO "Shirnk completed successfully!\n");
 	}
 	else if(!strncmp("append=", buff, 7))
 	{
 		if(100 - (length - 1) - str_len > 0)
+		{
 			strcat(string,(buff + 7));
+			printk(KERN_INFO "String appended successfully!\n");
+		}
 		else
-			printk(KERN_WARNING "APPEND STRING PREDUGACAKKKK\n"); 
+			printk(KERN_WARNING "String too long!\n"); 
 	}
 	else if(!strncmp("truncate=", buff, 9))
 	{
@@ -160,9 +175,9 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 	{
 		printk(KERN_WARNING "Input string doesn't meet requirements! Max 100 characters.\n"); 
 	}
-
-	return length;
 */
+	return length;
+
 }
 
 static int __init stred_init(void)
