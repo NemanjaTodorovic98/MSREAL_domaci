@@ -107,18 +107,10 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		i = 0;
 		while(string[i] != '\0')
 		{
-			i++;
 			string[i] = (*(tmp + i));
+			i++;
 		}
 		string[i] = '\0';
-		/*while(string[i] == ' ') i++;
-		first_char = i;
-		i = str_len - 2;
-		while(string[i] == ' ') i--;
-		string[i + 1] = 0;
-		str_len = strlen(string);
-		i = 0;
-		while(i != str_len - 1) string[i] = string[first_char + i]; */
 		printk(KERN_INFO "Shirnk completed successfully!\n");
 	}
 	else if(!strncmp("append=", buff, 7))
