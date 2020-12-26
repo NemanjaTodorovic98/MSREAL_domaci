@@ -52,39 +52,26 @@ ssize_t stred_read(struct file *pfile, char __user *buffer, size_t length, loff_
 {
 	int ret;
 	char buff[BUFF_SIZE];
-	int str_len = strlen(string);
+	long int str_len = strlen(string);
 	if (endRead){
 		endRead = 0;
 		return 0;
 	}
-
-	//if(pos > 0)
-	//{
-		//pos --;
-		//len = scnprintf(buff, BUFF_SIZE, "%d ", string[pos]);
-		strcat(buff,string);
-		ret = copy_to_user(buffer, buff, str_len);
-		if(ret)
-			return -EFAULT;
-		printk(KERN_INFO "Succesfully read\n");
+	strcpy(buff, string);
+	ret = copy_to_user(buffer, buff, str_len);
+	if(ret) return -EFAULT;
+	printk(KERN_INFO "Succesfully read\n");
 	endRead = 1;
-	//}
-	//else
-	//{
-	//		printk(KERN_WARNING "Stred is empty\n"); 
-	//}
-
 	return str_len;
 }
 
 ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset) 
 {
 	char buff[BUFF_SIZE];
-	unsigned int word;
-	int str_len = strlen(string);
+	unsigned int word = 0;
+	long int str_len = strlen(string);
 	char *tmp;	
 	int ret;
-	int first_char=0;
 	int i=0;
 
 	ret = copy_from_user(buff, buffer, length);
@@ -111,7 +98,7 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 			i++;
 		}
 		string[i] = '\0';
-		printk(KERN_INFO "Shirnk completed successfully!\n");
+		printk(KERN_INFO "Shrink completed successfully!\n");
 	}
 	else if(!strncmp("append=", buff, 7))
 	{
@@ -125,49 +112,29 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 	}
 	else if(!strncmp("truncate=", buff, 9))
 	{
-		ret = sscanf(buff,"%d",&word);
- 		if( ret != 1 || word < (str_len - 1))
-			printk(KERN_WARNING "Wrong input in function TRUNCATE %d %d \n",ret, word);
+		ret = sscanf(buff+9,"%d",&word);
+ 		if( ret != 1 || word > (str_len - 1))
+			printk(KERN_WARNING "Wrong input in function TRUNCATE.\n");
 		else
 		{
-			string[(str_len - 1) - word] = '\0'; 
+			string[(str_len) - word] = '\0'; 
 			printk(KERN_INFO "Last %d elements are removed.\n",word);
 		}				
 	}
-	/*else if(!strcmp("remove=", buff, 6))
+	else if(!strncmp("remove=", buff, 7))
 	{
-		ret = sscanf(buff, *(buff+7), &word);
-		i = ret;
-		if(strstr(word, string) != NULL)
-			while(i < (str_len - 1))
-			{
-				
-				i++;
-			}
-		else printk(KERN_INFO "No matches!\n");
-	}*/	
-
-	else printk(KERN_WARNING "Invalid function call.\n");	
-
-	/*if(pos<100)
-	{
-		//ret = sscanf(buff,"%d",&word);
-		//if(ret==1)//one parameter parsed in sscanf
-		{
-			printk(KERN_INFO "Succesfully wrote value %d", word); 
-			stred[pos] = value; 
-			pos=pos+1;
+		if(strlen((buff+7)) > str_len) printk(KERN_WARNING "Searched string too long !\n");
+		while( (tmp = strstr(string,(buff + 7)))  != NULL )
+		{	
+			* tmp = '\0';
+			strcat(string, (tmp + strlen(buff + 7)) );
 		}
-		else
-		{
-			printk(KERN_WARNING "Wrong command format\n");
-		}
-	}
-	else
-	{
-		printk(KERN_WARNING "Input string doesn't meet requirements! Max 100 characters.\n"); 
-	}
-*/
+		printk(KERN_INFO "Deasired string is removed from buffer!\n");
+	}	
+
+	else 
+		printk(KERN_WARNING "Invalid function call.\n");	
+
 	return length;
 
 }
