@@ -129,7 +129,7 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 			* tmp = '\0';
 			strcat(string, (tmp + strlen(buff + 7)) );
 		}
-		printk(KERN_INFO "Deasired string is removed from buffer!\n");
+		printk(KERN_INFO "Desired string is removed from buffer!\n");
 	}	
 
 	else 
