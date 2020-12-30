@@ -19,10 +19,12 @@ int main(void)
 	char input = '0';
 	char *file_data;
 	char *input_data;
+	char *shrink = "shrink\n";
+	char *clear = "clear\n";
 	size_t num_of_bytes = 100;
 	FILE* fp;
 
-	while(1)//input != 'Q') 
+	while(1)
 	{
 		print_menu();
 		input_data = (char *)malloc(num_of_bytes+1); 
@@ -39,11 +41,15 @@ int main(void)
 					return -1;
 				}
 				file_data = (char *)malloc(num_of_bytes+1); 
-				//fscanf(fp, "%s", file_data);
 				getline(&file_data, &num_of_bytes, fp); 
 				puts("Trenutno stanje stringa je:");
-				puts(file_data);
+				if( *file_data == '\0' )
+					puts("** PRAZAN STRING! **");
+				else
+					puts(file_data);
+				free(file_data);
 				break;
+				
 								
 			case '2':
 				fp = fopen("/dev/stred", "w");
@@ -57,6 +63,7 @@ int main(void)
 				getline(&file_data, &num_of_bytes, stdin); 
 				fputs("string=",fp);
 				fputs(file_data, fp);
+				free(file_data);
 				break;
 				
 			case '3':
@@ -71,6 +78,7 @@ int main(void)
 				getline(&file_data, &num_of_bytes, stdin); 
 				fputs("append=",fp);
 				fputs(file_data, fp);
+				free(file_data);
 				break;
 				
 			case '4':
@@ -80,7 +88,7 @@ int main(void)
 					puts("Problem pri otvaranju /dev/stred");
 					return -1;
 				}
-				fputs("clear\n",fp);
+				fputs(clear,fp);
 				puts("String obrisan");
 				break;					
 				
@@ -91,7 +99,7 @@ int main(void)
 					puts("Problem pri otvaranju /dev/stred");
 					return -1;
 				}
-				fputs("shrink\n",fp);
+				fputs(shrink,fp);
 				puts("Obrisani vodeci i prateci prazni karakteri");
 				break;		
 				
@@ -107,6 +115,7 @@ int main(void)
 				getline(&file_data, &num_of_bytes, stdin); 
 				fputs("remove=",fp);
 				fputs(file_data, fp);
+				free(file_data);
 				break;
 				
 			case '7':
@@ -121,6 +130,7 @@ int main(void)
 				getline(&file_data, &num_of_bytes, stdin); 
 				fputs("truncate=",fp);
 				fputs(file_data, fp);
+				free(file_data);
 				break;
 				
 			case 'Q':
@@ -139,7 +149,6 @@ int main(void)
 			puts("Problem pri zatvaranju /dev/stred");
 			return -1;
 		}
-		free(file_data);
 		free(input_data);
 	}			
 	return 0;
