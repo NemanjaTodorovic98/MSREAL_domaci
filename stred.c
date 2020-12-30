@@ -17,6 +17,9 @@ static struct class *my_class;
 static struct device *my_device;
 static struct cdev *my_cdev;
 
+DECLARE_WAIT_QUEUE_HEAD(writeQ);
+
+
 char string[100];
 //int pos = 0;
 int endRead = 0;
@@ -59,6 +62,7 @@ ssize_t stred_read(struct file *pfile, char __user *buffer, size_t length, loff_
 	}
 	strcpy(buff, string);
 	ret = copy_to_user(buffer, buff, str_len);
+	if( !str_len ) printk(KERN_INFO "Stred is empty.\n");
 	if(ret) return -EFAULT;
 	printk(KERN_INFO "Succesfully read\n");
 	endRead = 1;
@@ -78,15 +82,24 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 	if(ret)
 		return -EFAULT;
 	buff[length-1] = '\0';
+	
+		
 	if(!strncmp("string=",buff,7))
 	{
 		printk(KERN_INFO "Input string successfully stored in buffer!\n");
-		strcpy(string, (buff+7));
+		if(strlen(buff+7) <= 100)
+		{	
+			strcpy(string, (buff+7));
+			wake_up_interruptible(&writeQ);
+		}
+		else
+			printk(KERN_WARNING "Input string is too long!\n");
 	}
 	else if(!strncmp("clear",buff,5))
 	{
 		for(i = 0; i < 100; i++) *(string+i) = 0;
 		printk(KERN_INFO "Internal buffer cleared successfully!\n");
+		wake_up_interruptible(&writeQ);
 	}
 	else if(!strncmp("shrink",buff,6))
 	{
@@ -99,16 +112,21 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		}
 		string[i] = '\0';
 		printk(KERN_INFO "Shrink completed successfully!\n");
+		wake_up_interruptible(&writeQ);
 	}
 	else if(!strncmp("append=", buff, 7))
 	{
-		if(100 - (length - 1) - str_len > 0)
+		while( ( strlen(string) + strlen(buff+7) - 1 ) > 100) 
+		{
+			if(wait_event_interruptible(writeQ,( strlen(string) + strlen(buff+7) - 1 ) < 100 ) )
+				return -ERESTARTSYS;
+		}
+		if( ( strlen(string) + strlen(buff+7) - 1 ) < 100 )
 		{
 			strcat(string,(buff + 7));
 			printk(KERN_INFO "String appended successfully!\n");
-		}
-		else
-			printk(KERN_WARNING "String too long!\n"); 
+		}	
+		
 	}
 	else if(!strncmp("truncate=", buff, 9))
 	{
@@ -119,7 +137,8 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		{
 			string[(str_len) - word] = '\0'; 
 			printk(KERN_INFO "Last %d elements are removed.\n",word);
-		}				
+		}
+		wake_up_interruptible(&writeQ);				
 	}
 	else if(!strncmp("remove=", buff, 7))
 	{
@@ -130,6 +149,7 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 			strcat(string, (tmp + strlen(buff + 7)) );
 		}
 		printk(KERN_INFO "Desired string is removed from buffer!\n");
+		wake_up_interruptible(&writeQ);
 	}	
 
 	else 
@@ -142,7 +162,7 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 static int __init stred_init(void)
 {
    int ret = 0;
-	int i=0;
+   int i=0;
 
 	//Initialize array
 	for (i=0; i<100; i++)
@@ -179,8 +199,7 @@ static int __init stred_init(void)
 		goto fail_2;
 	}
    printk(KERN_INFO "cdev added\n");
-   //printk(KERN_INFO "Hello world\n");
-
+ 
    return 0;
 
    fail_2:
@@ -198,7 +217,6 @@ static void __exit stred_exit(void)
    device_destroy(my_class, my_dev_id);
    class_destroy(my_class);
    unregister_chrdev_region(my_dev_id,1);
-   //printk(KERN_INFO "Goodbye, cruel world\n");
 }
 
 
